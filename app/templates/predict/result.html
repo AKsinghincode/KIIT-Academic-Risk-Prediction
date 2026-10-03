@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 text-center">
+            <div class="card-header bg-dark text-white fw-bold">Prediction Assessment Output</div>
+            <div class="card-body py-4">
+                <h5 class="text-muted">Calculated Academic Risk Level</h5>
+                
+                {% if result.risk_level == 'Low' %}
+                    <h1 class="display-3 text-success fw-bold">LOW RISK</h1>
+                {% elif result.risk_level == 'Medium' %}
+                    <h1 class="display-3 text-warning fw-bold">MEDIUM RISK</h1>
+                {% else %}
+                    <h1 class="display-3 text-danger fw-bold">HIGH RISK</h1>
+                {% endif %}
+
+                <p class="fs-5 mt-2">Model Confidence Score: <strong>{{ (result.confidence * 100)|round|int }}%</strong></p>
+                <div class="alert alert-info d-inline-block px-4 mt-2">
+                    <strong>Primary Contributing Factors:</strong> {{ result.key_factors }}
+                </div>
+
+                <div class="mt-4">
+                    <a href="/dashboard" class="btn btn-primary px-4 me-2">View Dashboard</a>
+                    <a href="/predict" class="btn btn-outline-secondary px-4">Analyze Another Record</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

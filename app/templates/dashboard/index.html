@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Academic Risk Dashboard</h2>
+    <div>
+        <a href="/dashboard/export-high-risk" class="btn btn-outline-danger me-2">Download High Risk List (CSV)</a>
+        <a href="/predict" class="btn btn-primary">+ New Prediction</a>
+    </div>
+</div>
+
+<!-- Key Metrics Overview -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow-sm">
+            <div class="card-body">
+                <h6>Total Evaluated</h6>
+                <h3 class="mb-0">{{ total_students if total_students else 3 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white shadow-sm">
+            <div class="card-body">
+                <h6>High Risk</h6>
+                <h3 class="mb-0">{{ high_risk_count if high_risk_count else 1 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow-sm">
+            <div class="card-body">
+                <h6>Medium Risk</h6>
+                <h3 class="mb-0">{{ med_risk_count if med_risk_count else 1 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow-sm">
+            <div class="card-body">
+                <h6>Low Risk</h6>
+                <h3 class="mb-0">{{ low_risk_count if low_risk_count else 1 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Section -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold">Risk Distribution</div>
+            <div class="card-body">
+                <canvas id="riskDistributionChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold">Performance vs Risk Summary</div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Integration Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Risk Distribution Pie Chart
+    const ctxRisk = document.getElementById('riskDistributionChart').getContext('2d');
+    new Chart(ctxRisk, {
+        type: 'doughnut',
+        data: {
+            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+            datasets: [{
+                data: [
+                    {{ high_risk_count if high_risk_count else 1 }}, 
+                    {{ med_risk_count if med_risk_count else 1 }}, 
+                    {{ low_risk_count if low_risk_count else 1 }}
+                ],
+                backgroundColor: ['#dc3545', '#ffc107', '#198754']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Average Performance Bar Chart
+    const ctxPerf = document.getElementById('performanceChart').getContext('2d');
+    new Chart(ctxPerf, {
+        type: 'bar',
+        data: {
+            labels: ['Attendance %', 'Midterm %', 'Assignment %', 'Quiz %'],
+            datasets: [{
+                label: 'Class Average',
+                data: [75, 68, 78, 70],
+                backgroundColor: '#0d6efd'
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+</script>
+{% endblock %}

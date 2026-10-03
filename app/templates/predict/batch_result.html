@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Batch Analysis Results</h2>
+    <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Calculated Risk</th>
+                    <th>Confidence Score</th>
+                    <th>Key Factors</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in results %}
+                <tr>
+                    <td><strong>{{ item.roll_number }}</strong></td>
+                    <td>{{ item.name }}</td>
+                    <td>
+                        {% if item.risk_level == 'Low' %}
+                            <span class="badge bg-success">Low Risk</span>
+                        {% elif item.risk_level == 'Medium' %}
+                            <span class="badge bg-warning text-dark">Medium Risk</span>
+                        {% else %}
+                            <span class="badge bg-danger">High Risk</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ (item.confidence * 100)|round|int }}%</td>
+                    <td><small class="text-muted">{{ item.key_factors }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
