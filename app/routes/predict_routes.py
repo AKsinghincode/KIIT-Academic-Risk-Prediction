@@ -6,6 +6,11 @@ from app.database import get_db
 
 predict_bp = Blueprint('predict', __name__)
 
+# Add this route so visiting the main site URL doesn't show 404
+@predict_bp.route('/')
+def home():
+    return redirect(url_for('predict.single_predict'))
+
 @predict_bp.route('/predict', methods=['GET', 'POST'])
 def single_predict():
     if request.method == 'POST':
@@ -58,7 +63,6 @@ def batch_predict():
 
     results = []
     if file and (file.filename.endswith('.csv') or file.filename.endswith('.txt')):
-        # Using utf-8-sig strips BOM characters added by Microsoft Excel
         stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
         csv_input = csv.DictReader(stream)
         
@@ -78,7 +82,6 @@ def batch_predict():
             pass
             
         for row in csv_input:
-            # Clean trailing spaces from CSV column names and values
             cleaned_row = {str(k).strip(): str(v).strip() for k, v in row.items() if k is not None}
             
             try:
