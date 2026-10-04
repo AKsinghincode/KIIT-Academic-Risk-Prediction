@@ -1,19 +1,14 @@
-import os
 from flask import Flask
+from app.database import close_db
 
 def create_app():
-    # Explicitly calculate absolute path to app/templates
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    template_dir = os.path.join(base_dir, 'templates')
-    
-    app = Flask(__name__, template_folder=template_dir)
-    app.config['SECRET_KEY'] = 'edurisk-secret-key'
+    app = Flask(__name__)
+    app.config.from_object('app.config.Config')
 
-    # Register Blueprints
-    from app.routes.dashboard import dashboard_bp
+    # Register database teardown
+    app.teardown_appcontext(close_db)
+
     from app.routes.predict_routes import predict_bp
-
-    app.register_blueprint(dashboard_bp)
     app.register_blueprint(predict_bp)
 
     return app
