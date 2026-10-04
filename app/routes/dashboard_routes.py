@@ -15,7 +15,6 @@ def dashboard():
         db = get_db()
         cursor = db.cursor()
         
-        # Ensure table exists
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS student_risk_records (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,12 +26,12 @@ def dashboard():
             )
         ''')
 
-        # Fetch stored predictions
         cursor.execute('SELECT * FROM student_risk_records ORDER BY id DESC')
         records = cursor.fetchall()
         
         total_students = len(records)
         for row in records:
+            # Handle sqlite Row indexing safely
             level = row['risk_level'] if 'risk_level' in row.keys() else ''
             if level == 'High Risk':
                 high_risk_count += 1
@@ -44,8 +43,9 @@ def dashboard():
     except Exception:
         pass
 
+    # Ensure this points to dashboard/index.html to match app/templates/dashboard/index.html
     return render_template(
-        'dashboard.html',
+        'dashboard/index.html',
         records=records,
         total_students=total_students,
         high_risk_count=high_risk_count,
