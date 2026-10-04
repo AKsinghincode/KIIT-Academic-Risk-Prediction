@@ -6,13 +6,16 @@ from app.database import get_db
 
 predict_bp = Blueprint('predict', __name__)
 
-# Add this route so visiting the main site URL doesn't show 404
+
 @predict_bp.route('/')
 def home():
+    """Redirect root path to prediction page."""
     return redirect(url_for('predict.single_predict'))
+
 
 @predict_bp.route('/predict', methods=['GET', 'POST'])
 def single_predict():
+    """Handle individual student risk predictions."""
     if request.method == 'POST':
         data = {
             'attendance': float(request.form.get('attendance', 0) or 0),
@@ -25,10 +28,11 @@ def single_predict():
         
         result = PredictionService.predict_risk(data)
         
-        # Save record to SQLite database
+        # Save individual prediction to SQLite database
         try:
             db = get_db()
-            db.execute('''
+            cursor = db.cursor()
+            cursor.execute('''
                 CREATE TABLE IF NOT EXISTS student_risk_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     attendance REAL,
@@ -38,7 +42,7 @@ def single_predict():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            db.execute(
+            cursor.execute(
                 'INSERT INTO student_risk_records (attendance, midterm, risk_level, confidence)'
                 ' VALUES (?, ?, ?, ?)',
                 (data['attendance'], data['midterm'], result['risk_level'], result['confidence'])
@@ -54,6 +58,7 @@ def single_predict():
 
 @predict_bp.route('/predict/batch', methods=['POST'])
 def batch_predict():
+    """Handle batch student predictions via CSV upload and save all rows to SQLite."""
     if 'file' not in request.files:
         return redirect(url_for('predict.single_predict'))
         
@@ -63,12 +68,16 @@ def batch_predict():
 
     results = []
     if file and (file.filename.endswith('.csv') or file.filename.endswith('.txt')):
+        # Safely read UTF-8 CSV stream
         stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
         csv_input = csv.DictReader(stream)
         
         db = get_db()
+        cursor = db.cursor()
+        
+        # Ensure database table exists before inserting
         try:
-            db.execute('''
+            cursor.execute('''
                 CREATE TABLE IF NOT EXISTS student_risk_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     attendance REAL,
@@ -108,8 +117,9 @@ def batch_predict():
             }
             results.append(res_dict)
 
+            # Insert every row into SQLite so the dashboard calculates full statistics
             try:
-                db.execute(
+                cursor.execute(
                     'INSERT INTO student_risk_records (attendance, midterm, risk_level, confidence)'
                     ' VALUES (?, ?, ?, ?)',
                     (res_dict['attendance'], res_dict['midterm'], res_dict['risk_level'], res_dict['confidence'])
