@@ -2,8 +2,7 @@ import csv
 import io
 from flask import Blueprint, render_template, request, redirect, url_for
 from app.services.predict_service import PredictionService
-from app.database import db
-from app.models.academic import StudentRiskRecord
+from app.database import get_db
 
 predict_bp = Blueprint('predict', __name__)
 
@@ -23,16 +22,15 @@ def single_predict():
         
         # Save record to SQLite database
         try:
-            record = StudentRiskRecord(
-                attendance=float(data['attendance']),
-                midterm=float(data['midterm']),
-                risk_level=result['risk_level'],
-                confidence=result['confidence']
+            db = get_db()
+            db.execute(
+                'INSERT INTO student_risk_records (attendance, midterm, risk_level, confidence)'
+                ' VALUES (?, ?, ?, ?)',
+                (float(data['attendance']), float(data['midterm']), result['risk_level'], result['confidence'])
             )
-            db.session.add(record)
-            db.session.commit()
+            db.commit()
         except Exception as e:
-            db.session.rollback()
+            pass
 
         return render_template('predict/result.html', result=result)
         
@@ -53,6 +51,7 @@ def batch_predict():
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         csv_input = csv.DictReader(stream)
         
+        db = get_db()
         for row in csv_input:
             prediction = PredictionService.predict_risk(row)
             res_dict = {
@@ -66,16 +65,14 @@ def batch_predict():
 
             # Persist batch record to database
             try:
-                record = StudentRiskRecord(
-                    attendance=float(row.get('attendance', 0)),
-                    midterm=float(row.get('midterm', 0)),
-                    risk_level=prediction['risk_level'],
-                    confidence=prediction['confidence']
+                db.execute(
+                    'INSERT INTO student_risk_records (attendance, midterm, risk_level, confidence)'
+                    ' VALUES (?, ?, ?, ?)',
+                    (float(row.get('attendance', 0)), float(row.get('midterm', 0)), prediction['risk_level'], prediction['confidence'])
                 )
-                db.session.add(record)
             except Exception:
                 pass
         
-        db.session.commit()
+        db.commit()
 
     return render_template('predict/batch_result.html', results=results)
