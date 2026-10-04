@@ -30,9 +30,13 @@ def dashboard():
         records = cursor.fetchall()
         
         total_students = len(records)
+
+        # Count directly using SQL or direct dict key access
         for row in records:
-            # Handle sqlite Row indexing safely
-            level = row['risk_level'] if 'risk_level' in row.keys() else ''
+            # Convert row to dictionary safely and strip any extra whitespace
+            row_dict = dict(row)
+            level = str(row_dict.get('risk_level', '')).strip()
+
             if level == 'High Risk':
                 high_risk_count += 1
             elif level == 'Medium Risk':
@@ -43,7 +47,6 @@ def dashboard():
     except Exception:
         pass
 
-    # Ensure this points to dashboard/index.html to match app/templates/dashboard/index.html
     return render_template(
         'dashboard/index.html',
         records=records,
